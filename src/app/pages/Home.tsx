@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronDown, Instagram, Youtube, Linkedin, Mail } from "lucide-react";
+import { ArrowRight, ChevronDown, Instagram, Youtube, Linkedin, Mail, ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import { useForm, ValidationError } from '@formspree/react';
 import { MagneticButton } from "../components/MagneticButton";
@@ -122,27 +122,29 @@ function TransformationRow({ from, to, active, index }: { from: string; to: stri
   );
 }
 
-// ─── Community Voice Card ─────────────────────────────────────────────────────
-const voices = Array.from({ length: 28 }, (_, i) => ({
-  img: `/comments/${i + 1}.png`,
-  rotation: (Math.random() - 0.5) * 6,
-}));
+// ─── Ripple Effect: fixed symmetric card layout ───────────────────────────────
+const ALL_COMMENT_IMAGES = Array.from({ length: 28 }, (_, i) => `/comments/${i + 1}.webp`);
+
+const VOICE_CARDS = [
+  // ── Left column  (side:"left", offset from left edge of container) ───────
+  { baseIndex: 0,  top: "3%",  side: "left"  as const, offset: "13%", rotation: -1.5, duration: 4.2, floatY: 12 },
+  { baseIndex: 3,  top: "22%", side: "left"  as const, offset: "17%", rotation:  1.0, duration: 3.8, floatY: 10 },
+  { baseIndex: 6,  top: "42%", side: "left"  as const, offset: "13%", rotation: -0.5, duration: 4.6, floatY: 14 },
+  { baseIndex: 9,  top: "62%", side: "left"  as const, offset: "17%", rotation:  1.5, duration: 4.0, floatY: 11 },
+  { baseIndex: 12, top: "80%", side: "left"  as const, offset: "14%", rotation: -1.0, duration: 3.6, floatY: 13 },
+  // ── Right column (side:"right", offset from right edge of container) ─────
+  { baseIndex: 15, top: "8%",  side: "right" as const, offset: "13%", rotation:  1.5, duration: 4.4, floatY: 11 },
+  { baseIndex: 18, top: "27%", side: "right" as const, offset: "17%", rotation: -1.0, duration: 4.0, floatY: 13 },
+  { baseIndex: 21, top: "47%", side: "right" as const, offset: "13%", rotation:  0.5, duration: 3.7, floatY: 12 },
+  { baseIndex: 24, top: "66%", side: "right" as const, offset: "17%", rotation: -1.5, duration: 4.3, floatY: 10 },
+  { baseIndex: 27, top: "83%", side: "right" as const, offset: "14%", rotation:  1.0, duration: 4.1, floatY: 14 },
+];
 
 function FloatingVoiceWall() {
-  const [visible, setVisible] = useState<number[]>([0, 1, 3, 4, 6, 7, 8, 9, 10, 11]);
+  const [tick, setTick] = useState(0);
   useEffect(() => {
-    const interval = setInterval(() => {
-      setVisible((prev) => {
-        const next = [...prev];
-        const toRemove = Math.floor(Math.random() * next.length);
-        let newIdx;
-        do { newIdx = Math.floor(Math.random() * voices.length); }
-        while (next.includes(newIdx));
-        next[toRemove] = newIdx;
-        return next;
-      });
-    }, 2800);
-    return () => clearInterval(interval);
+    const id = setInterval(() => setTick((t) => t + 1), 5000);
+    return () => clearInterval(id);
   }, []);
 
   return (
@@ -156,7 +158,7 @@ function FloatingVoiceWall() {
         }}
       />
 
-      {/* The Text Below the Image (Faded/Blurred Background style) */}
+      {/* Watermark text */}
       <div className="absolute inset-0 flex items-end pb-8 justify-center z-0 pointer-events-none">
         <h2
           className="text-center px-4"
@@ -178,50 +180,44 @@ function FloatingVoiceWall() {
       {/* Center Image */}
       <div className="relative z-20 flex flex-col items-center justify-center mb-24 md:mb-32">
         <img
-          src="/2-removebg.png"
+          src="/2-removebg.webp"
           alt="Susan Grace smiling"
+          loading="lazy"
           className="w-full max-w-[360px] md:max-w-[550px] lg:max-w-[600px] h-auto object-contain drop-shadow-2xl relative z-10"
         />
       </div>
 
-      {/* Floating cards */}
-      <div className="absolute inset-0 z-10 pointer-events-none p-4 md:p-8">
-        {voices.map((v, i) => {
-          const positions = [
-            { top: "8%", left: "15%" },
-            { top: "10%", left: "60%" },
-            { top: "35%", left: "10%" },
-            { top: "40%", left: "65%" },
-            { top: "65%", left: "12%" },
-            { top: "60%", left: "62%" },
-            { top: "15%", left: "28%" },
-            { top: "20%", left: "68%" },
-            { top: "75%", left: "18%" },
-            { top: "78%", left: "58%" },
-            { top: "50%", left: "18%" },
-            { top: "45%", left: "66%" },
-          ];
-          const pos = positions[i % positions.length];
-          const isVisible = visible.includes(i);
-          return (
+      {/* Cards: absolutely positioned within a centered max-width container
+          so left and right columns are always equidistant from the image */}
+      <div className="absolute inset-0 z-10 pointer-events-none">
+        <div className="relative h-full max-w-[1400px] mx-auto">
+          {VOICE_CARDS.map((card, i) => (
             <motion.div
               key={i}
-              className="absolute max-w-[180px] md:max-w-[280px] transition-all duration-1000 overflow-hidden"
+              className={`absolute max-w-[160px] md:max-w-[240px] overflow-hidden ${[1, 3, 6, 8].includes(i) ? "hidden md:block" : ""}`}
               style={{
-                top: pos.top,
-                left: pos.left,
-                transform: `rotate(${v.rotation}deg)`,
-                opacity: isVisible ? 1 : 0,
+                top: card.top,
+                [card.side]: card.offset,
+                rotate: card.rotation,
                 boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
                 borderRadius: "12px",
               }}
-              animate={{ y: [0, -15, 0] }}
-              transition={{ duration: 4 + i % 3, repeat: Infinity, ease: "easeInOut" }}
+              animate={{ y: [0, -card.floatY, 0] }}
+              transition={{ duration: card.duration, repeat: Infinity, ease: "easeInOut", delay: i * 0.4 }}
             >
-              <img src={v.img} alt="Audience comment" className="w-full h-auto object-cover" />
+              <motion.img
+                key={(card.baseIndex + tick) % ALL_COMMENT_IMAGES.length}
+                src={ALL_COMMENT_IMAGES[(card.baseIndex + tick) % ALL_COMMENT_IMAGES.length]}
+                alt="Audience comment"
+                className="w-full h-auto object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+                loading="lazy"
+              />
             </motion.div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -229,13 +225,51 @@ function FloatingVoiceWall() {
 
 const backgroundVideos = [1, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
+function VideoCard({ vid, diff, isCenter }: { vid: number; diff: number; isCenter: boolean }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const absDiff = Math.abs(diff);
+  const scale = isCenter ? 1 : absDiff === 1 ? 0.85 : 0.7;
+  const opacity = isCenter ? 1 : absDiff === 1 ? 0.6 : 0.3;
+  const zIndex = 10 - absDiff;
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (isCenter) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }, [isCenter]);
+
+  return (
+    <motion.div
+      className="absolute w-[160px] sm:w-[200px] md:w-[260px] aspect-[9/16] rounded-[20px] md:rounded-[32px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] bg-black"
+      animate={{ x: `${diff * 80}%`, scale, zIndex, opacity }}
+      transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
+      style={{ zIndex }}
+    >
+      {!isCenter && <div className="absolute inset-0 bg-black/20 z-10 pointer-events-none" />}
+      <video
+        ref={videoRef}
+        src={`/videos2/${vid}.mp4`}
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        className="w-full h-full object-cover"
+      />
+    </motion.div>
+  );
+}
+
 function VideoCoverflowCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % backgroundVideos.length);
-    }, 3000); // Change video every 3 seconds
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -251,34 +285,9 @@ function VideoCoverflowCarousel() {
     <div className="relative w-full max-w-[1000px] mx-auto h-[320px] sm:h-[400px] md:h-[500px] flex items-center justify-center overflow-visible mb-12">
       {backgroundVideos.map((vid, i) => {
         const diff = getPosition(i);
-        const absDiff = Math.abs(diff);
-
-        if (absDiff > 2) return null;
-
-        const isCenter = diff === 0;
-        const scale = isCenter ? 1 : absDiff === 1 ? 0.85 : 0.7;
-        const zIndex = 10 - absDiff;
-        const opacity = isCenter ? 1 : absDiff === 1 ? 0.6 : 0.3;
-
+        if (Math.abs(diff) > 2) return null;
         return (
-          <motion.div
-            key={vid}
-            className="absolute w-[160px] sm:w-[200px] md:w-[260px] aspect-[9/16] rounded-[20px] md:rounded-[32px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] bg-black"
-            animate={{ x: `${diff * 80}%`, scale, zIndex, opacity }}
-            transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
-            style={{ zIndex }}
-          >
-            {/* Dark overlay for side videos */}
-            {!isCenter && <div className="absolute inset-0 bg-black/20 z-10 pointer-events-none" />}
-            <video
-              src={`/videos/${vid}.mp4`}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-            />
-          </motion.div>
+          <VideoCard key={vid} vid={vid} diff={diff} isCenter={diff === 0} />
         );
       })}
     </div>
@@ -286,7 +295,7 @@ function VideoCoverflowCarousel() {
 }
 
 // ─── Magic Image Swap Component ───────────────────────────────────────────────
-function MagicImage({ images, alt, className, style, whileHover, transition }: any) {
+function MagicImage({ images, alt, className, style, whileHover, transition, loading = "lazy" }: any) {
   const ref = useRef<HTMLImageElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -320,6 +329,7 @@ function MagicImage({ images, alt, className, style, whileHover, transition }: a
         style={style}
         whileHover={whileHover}
         transition={transition}
+        loading={loading}
       />
     </>
   );
@@ -372,6 +382,69 @@ export function Home() {
     "Media Inquiry",
     "General Message"
   ];
+
+  // ── Stories carousel state ───────────────────────────────────────────────
+  const STORIES: any[] = [];
+
+  const [storiesSlide, setStoriesSlide] = useState(0); // 0 = intro, 1 = coming soon
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const totalSlides = 2; // intro + coming soon
+
+  const [storiesHintActive, setStoriesHintActive] = useState(false);
+  const storiesSlideRef = useRef(storiesSlide);
+  const storiesNudgeInProgress = useRef(false);
+  useEffect(() => { storiesSlideRef.current = storiesSlide; }, [storiesSlide]);
+
+  useEffect(() => {
+    const el = storiesTeaser.ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || storiesSlideRef.current !== 0 || storiesNudgeInProgress.current) return;
+      storiesNudgeInProgress.current = true;
+      const fire = setTimeout(() => {
+        setStoriesHintActive(true);
+        setTimeout(() => {
+          setStoriesHintActive(false);
+          setTimeout(() => { storiesNudgeInProgress.current = false; }, 4000);
+        }, 1400);
+      }, 2000);
+      return () => clearTimeout(fire);
+    }, { threshold: 0.3 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  function goToSlide(next: number) {
+    setPlayingId(null);
+    setStoriesSlide(next);
+  }
+
+  // ── Swipe support for Stories carousel ───────────────────────────────────
+  const swipeStartX = useRef<number | null>(null);
+  const [swipeHintVisible, setSwipeHintVisible] = useState(false);
+  const swipeHintShown = useRef(false);
+
+  useEffect(() => {
+    if (!storiesTeaser.inView || swipeHintShown.current) return;
+    swipeHintShown.current = true;
+    setSwipeHintVisible(true);
+    const t = setTimeout(() => setSwipeHintVisible(false), 2800);
+    return () => clearTimeout(t);
+  }, [storiesTeaser.inView]);
+
+  function handleTouchStart(e: React.TouchEvent) {
+    swipeStartX.current = e.touches[0].clientX;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (swipeStartX.current === null) return;
+    const delta = swipeStartX.current - e.changedTouches[0].clientX;
+    swipeStartX.current = null;
+    if (Math.abs(delta) < 40) return; // too small, ignore
+    if (delta > 0) goToSlide(Math.min(totalSlides - 1, storiesSlide + 1)); // swipe left → next
+    else goToSlide(Math.max(0, storiesSlide - 1));                          // swipe right → prev
+    setSwipeHintVisible(false);
+  }
 
   const transformPairs = [
     { from: "Dreaming", to: "Doing" },
@@ -498,9 +571,10 @@ export function Home() {
             />
             <MagicImage
               style={{ y: heroImageY }}
-              images={["/6-removebg.png", "/10-removebg.png"]}
+              images={["/6-removebg.webp", "/10-removebg.webp"]}
               alt="Susan Grace"
               className="relative z-10 w-full h-auto max-w-[400px] lg:max-w-[500px] object-contain drop-shadow-2xl lg:translate-x-12"
+              loading="eager"
             />
           </div>
         </div>
@@ -585,7 +659,7 @@ export function Home() {
               </blockquote>
               <div className="flex items-center gap-5">
                 <div className="w-14 h-14 rounded-full overflow-hidden border border-[#15171B]/10">
-                  <img src="/9-removebg-preview.png" alt="Susan Grace" className="w-full h-full object-cover bg-[#F3E8E3]" />
+                  <img src="/9-removebg-preview.webp" alt="Susan Grace" loading="lazy" className="w-full h-full object-cover bg-[#F3E8E3]" />
                 </div>
                 <div>
                   <p
@@ -686,7 +760,7 @@ export function Home() {
               <MagicImage
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.8 }}
-                images={["/7-removebg.png", "/5-removebg.png"]}
+                images={["/7-removebg.webp", "/5-removebg.webp"]}
                 alt="Susan Grace Movement"
                 className="w-full h-auto object-contain max-h-[800px] drop-shadow-2xl scale-110 lg:scale-[1.35] lg:-ml-16 origin-bottom lg:origin-bottom-left relative z-10"
               />
@@ -754,95 +828,207 @@ export function Home() {
         </div>
       </section>
 
-      {/* ── THE STORIES teaser ───────────────────────────────────────────── */}
-      <section id="stories" ref={storiesTeaser.ref} style={{ background: "#F3E8E3" }} className="py-20 md:py-32 px-6">
-        <div className={`max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center transition-all duration-[1200ms] ease-out ${storiesTeaser.inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"}`}>
-          <div>
-            <p
-              className="text-[#C51C48] mb-6"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontWeight: 600,
-                fontSize: "0.75rem",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-              }}
-            >
-              The Stories
-            </p>
-            <h2
-              className="text-[#15171B] mb-6 md:mb-8 text-[clamp(2rem,6vw,4rem)] leading-[1.1]"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontWeight: 800,
-                lineHeight: 1,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Women Building The Future
-            </h2>
-            <p className="text-[#15171B]/70 max-w-[640px] mb-6" style={{ fontFamily: "'Inter', sans-serif", fontSize: "1.0625rem", lineHeight: 1.7 }}>
-              Susan is now expanding her work beyond personal content and into long-form storytelling. Through interviews, documentaries, conversations, and original media projects, she is documenting women who are building extraordinary lives and creating meaningful impact.
-            </p>
-            <div className="flex flex-wrap gap-3 mb-10">
-              {["Founders.", "CEOs.", "Creators.", "Community builders.", "Educators.", "Innovators.", "Billionaires.", "Multi-millionaires."].map((t) => (
-                <span
-                  key={t}
-                  className="px-3 py-1 border border-[#C51C48]/30 text-[#C51C48]"
-                  style={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontWeight: 600,
-                    fontSize: "0.75rem",
-                    letterSpacing: "0.05em",
-                    textTransform: "uppercase",
-                  }}
+      {/* ── THE STORIES carousel ─────────────────────────────────────────── */}
+      <section id="stories" ref={storiesTeaser.ref} style={{ background: "#F3E8E3" }} className="py-6 md:py-10 px-6 overflow-hidden">
+        <div className={`max-w-[1200px] mx-auto transition-all duration-[1200ms] ease-out ${storiesTeaser.inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"}`}>
+
+          {/* Slide area */}
+          <motion.div
+            className="relative"
+            animate={storiesHintActive ? { x: [0, -46, -46, 0] } : { x: 0 }}
+            transition={storiesHintActive ? { duration: 1.4, times: [0, 0.3, 0.7, 1], ease: "easeInOut" } : { duration: 0 }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <AnimatePresence mode="wait">
+              {storiesSlide === 0 ? (
+                /* ── Slide 0: Intro ─────────────────────────────────────── */
+                <motion.div
+                  key="intro"
+                  initial={{ opacity: 0, x: -40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -40 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center"
                 >
-                  {t.replace(".", "")}
-                </span>
+                  {/* Left: existing intro copy */}
+                  <div>
+                    <p
+                      className="text-[#C51C48] mb-6"
+                      style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: "0.75rem", letterSpacing: "0.05em", textTransform: "uppercase" }}
+                    >
+                      The Stories
+                    </p>
+                    <h2
+                      className="text-[#15171B] mb-6 md:mb-8 text-[clamp(2rem,6vw,4rem)]"
+                      style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}
+                    >
+                      Women Building The Future
+                    </h2>
+                    <p className="text-[#15171B]/70 max-w-[640px] mb-6" style={{ fontFamily: "'Inter', sans-serif", fontSize: "1.0625rem", lineHeight: 1.7 }}>
+                      Susan is now expanding her work beyond personal content and into long-form storytelling. Through interviews, documentaries, conversations, and original media projects, she is documenting women who are building extraordinary lives and creating meaningful impact.
+                    </p>
+                    <div className="flex flex-wrap gap-3 mb-10">
+                      {["Founders", "CEOs", "Creators", "Community builders", "Educators", "Innovators", "Billionaires", "Multi-millionaires"].map((t) => (
+                        <span
+                          key={t}
+                          className="px-3 py-1 border border-[#C51C48]/30 text-[#C51C48]"
+                          style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: "0.75rem", letterSpacing: "0.05em", textTransform: "uppercase" }}
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-[#15171B]/70 max-w-[640px] mb-8" style={{ fontFamily: "'Inter', sans-serif", fontSize: "1.0625rem", lineHeight: 1.7 }}>
+                      These women did not inherit permission. They created it. They built industries. Created jobs. Transformed industries. Generated wealth. And redefined what is possible for the next generation of women.
+                    </p>
+                    <div className="flex flex-wrap gap-4">
+                      <MagneticButton
+                        href="#contact"
+                        className="px-6 py-3 rounded-full bg-[#C51C48] text-white hover:shadow-[0_0_20px_rgba(192,44,107,0.4)] transition-all duration-300"
+                        style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: "0.875rem", letterSpacing: "0.05em", textTransform: "uppercase" }}
+                      >
+                        Nominate A Woman
+                      </MagneticButton>
+                      <MagneticButton
+                        href="#contact"
+                        className="px-6 py-3 rounded-full border border-[#15171B]/30 text-[#15171B] hover:border-[#C51C48] hover:text-[#C51C48] transition-all duration-300"
+                        style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: "0.875rem", letterSpacing: "0.05em", textTransform: "uppercase" }}
+                      >
+                        Become A Guest
+                      </MagneticButton>
+                    </div>
+                  </div>
+
+                  {/* Right: hero image */}
+                  <div className="relative w-full aspect-[4/5] md:aspect-square lg:aspect-[4/5] overflow-hidden rounded-2xl shadow-2xl">
+                    <motion.img
+                      style={{ y: storiesImageY }}
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.8 }}
+                      src="/3.webp"
+                      alt="The Stories"
+                      loading="lazy"
+                      className="w-full h-[120%] -top-[10%] relative object-cover"
+                    />
+                  </div>
+                </motion.div>
+              ) : (
+                /* ── Slide 1: Coming Soon ────────────────────────── */
+                <motion.div
+                  key="coming-soon"
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 40 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="w-full flex justify-center py-8"
+                >
+                  <div className="w-full max-w-4xl relative p-8 md:p-16 rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.03)] border border-white/60 bg-gradient-to-br from-white/90 to-[#F3E8E3]/60 backdrop-blur-md flex flex-col items-center text-center">
+                    <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_center,_#15171B_0%,_transparent_70%)] pointer-events-none rounded-[2rem]"></div>
+                    
+                    <div className="relative z-10 inline-flex items-center px-5 py-2.5 rounded-full bg-[#C51C48] text-white font-semibold text-xs tracking-widest uppercase mb-10 shadow-lg shadow-[#C51C48]/30">
+                      <span className="w-2 h-2 rounded-full bg-white animate-pulse mr-3"></span>
+                      Coming Soon
+                    </div>
+                    
+                    <h2 
+                      className="relative z-10 text-[clamp(2rem,4vw,3.5rem)] text-[#15171B] mb-10 max-w-3xl"
+                      style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontWeight: 800,
+                        lineHeight: 1.1,
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      Multimillionaires and Billionaires stories from African women coming soon.
+                    </h2>
+                    
+                    <button
+                      onClick={() => goToSlide(0)}
+                      className="relative z-10 px-6 py-3 rounded-full border border-[#15171B]/30 text-[#15171B] hover:border-[#C51C48] hover:text-[#C51C48] transition-all duration-300"
+                      style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: "0.875rem", letterSpacing: "0.05em", textTransform: "uppercase" }}
+                    >
+                      Back to Overview
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          {/* ── Navigation: arrows + dots ──────────────────────────────────── */}
+          <div className="flex items-center justify-between mt-12">
+            {/* Prev arrow */}
+            <motion.button
+              onClick={() => goToSlide(Math.max(0, storiesSlide - 1))}
+              disabled={storiesSlide === 0}
+              whileTap={{ scale: 0.82 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className="w-11 h-11 rounded-full border border-[#15171B]/20 flex items-center justify-center text-[#15171B] disabled:opacity-20 hover:border-[#C51C48] hover:text-[#C51C48] transition-colors duration-200"
+              aria-label="Previous"
+            >
+              <ChevronLeft size={20} />
+            </motion.button>
+
+            {/* Dots */}
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalSlides }).map((_, i) => (
+                <motion.button
+                  key={i}
+                  onClick={() => goToSlide(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  whileTap={{ scale: 0.75 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="transition-all duration-300"
+                  style={{
+                    width: storiesSlide === i ? "28px" : "8px",
+                    height: "8px",
+                    borderRadius: "9999px",
+                    background: storiesSlide === i ? "#C51C48" : "rgba(21,23,27,0.25)",
+                  }}
+                />
               ))}
             </div>
-            <p className="text-[#15171B]/70 max-w-[640px] mb-8" style={{ fontFamily: "'Inter', sans-serif", fontSize: "1.0625rem", lineHeight: 1.7 }}>
-              These women did not inherit permission. They created it. They built industries. Created jobs. Transformed industries. Generated wealth. And redefined what is possible for the next generation of women.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <MagneticButton
-                href="#contact"
-                className="px-6 py-3 rounded-full bg-[#C51C48] text-white hover:shadow-[0_0_20px_rgba(192,44,107,0.4)] transition-all duration-300"
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontWeight: 600,
-                  fontSize: "0.875rem",
-                  letterSpacing: "0.05em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Nominate A Woman
-              </MagneticButton>
-              <MagneticButton
-                href="#contact"
-                className="px-6 py-3 rounded-full border border-[#15171B]/30 text-[#15171B] hover:border-[#C51C48] hover:text-[#C51C48] transition-all duration-300"
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontWeight: 600,
-                  fontSize: "0.875rem",
-                  letterSpacing: "0.05em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Become A Guest
-              </MagneticButton>
-            </div>
+
+            {/* Next arrow — pulses on hint, pops on click */}
+            <motion.button
+              onClick={() => goToSlide(Math.min(totalSlides - 1, storiesSlide + 1))}
+              disabled={storiesSlide === totalSlides - 1}
+              whileTap={{ scale: 0.82 }}
+              animate={storiesHintActive ? {
+                scale: [1, 1.35, 1],
+                boxShadow: [
+                  "0 0 0 0px rgba(197,28,72,0)",
+                  "0 0 0 3px #C51C48, 0 0 18px rgba(197,28,72,0.45)",
+                  "0 0 0 0px rgba(197,28,72,0)",
+                ],
+              } : { scale: 1, boxShadow: "0 0 0 0px rgba(197,28,72,0)" }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className="w-11 h-11 rounded-full border border-[#15171B]/20 flex items-center justify-center text-[#15171B] disabled:opacity-20 hover:border-[#C51C48] hover:text-[#C51C48] transition-colors duration-200"
+              aria-label="Next"
+            >
+              <ChevronRight size={20} />
+            </motion.button>
           </div>
-          <div className="relative w-full aspect-[4/5] md:aspect-square lg:aspect-[4/5] overflow-hidden rounded-2xl shadow-2xl">
-            <motion.img
-              style={{ y: storiesImageY }}
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.8 }}
-              src="/3.jfif"
-              alt="The Stories"
-              className="w-full h-[120%] -top-[10%] relative object-cover"
-            />
-          </div>
+
+          {/* Swipe hint — mobile only, fades out after first view */}
+          <AnimatePresence>
+            {swipeHintVisible && (
+              <motion.p
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.4 }}
+                className="md:hidden text-center mt-4 text-[#15171B]/40 flex items-center justify-center gap-2"
+                style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.75rem", letterSpacing: "0.04em" }}
+              >
+                <ChevronLeft size={13} />
+                Swipe to explore
+                <ChevronRight size={13} />
+              </motion.p>
+            )}
+          </AnimatePresence>
+
         </div>
       </section>
 
@@ -941,7 +1127,7 @@ export function Home() {
               }}
             />
             <MagicImage
-              images={["/4-removebg.png", "/1-removebg.png"]}
+              images={["/4-removebg.webp", "/1-removebg.webp"]}
               alt="Susan Grace"
               className="relative z-10 w-full h-full object-contain drop-shadow-2xl lg:scale-110 origin-bottom"
             />

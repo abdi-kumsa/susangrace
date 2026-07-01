@@ -39,16 +39,15 @@ export function Nav() {
         <div className="max-w-[1400px] mx-auto px-6 h-full flex items-center justify-between">
           {/* Wordmark */}
           <a href="#hero" className={`${logoColor} transition-colors duration-500 flex items-center gap-3`}>
-            <img src="/9-removebg-preview.png" alt="Susan Grace" className="w-10 h-10 rounded-full object-cover border border-#15171B/10 bg-[#F3E8E3]" />
+            <img src="/9-removebg-preview.webp" alt="Susan Grace" className="w-10 h-10 rounded-full object-cover border border-#15171B/10 bg-[#F3E8E3]" />
             <span
               style={{
-                fontFamily: "'Inter', sans-serif",
-                fontWeight: 800,
-                fontSize: "1.125rem",
-                letterSpacing: "0.08em",
+                fontFamily: "'Great Vibes', cursive",
+                fontWeight: 400,
+                fontSize: "2rem",
               }}
             >
-              SUSAN GRACE
+              Susan Grace
             </span>
           </a>
 
@@ -104,17 +103,16 @@ export function Nav() {
       >
         <div className="flex items-center justify-between px-6 h-[72px] border-b border-#15171B/10">
           <div className="flex items-center gap-3">
-            <img src="/9-removebg-preview.png" alt="Susan Grace" className="w-8 h-8 rounded-full object-cover border border-#15171B/10 bg-[#F3E8E3]" />
+            <img src="/9-removebg-preview.webp" alt="Susan Grace" className="w-8 h-8 rounded-full object-cover border border-#15171B/10 bg-[#F3E8E3]" />
             <span
               className="text-#15171B"
               style={{
-                fontFamily: "'Inter', sans-serif",
-                fontWeight: 800,
-                fontSize: "1.125rem",
-                letterSpacing: "0.08em",
+                fontFamily: "'Great Vibes', cursive",
+                fontWeight: 400,
+                fontSize: "1.75rem",
               }}
             >
-              SUSAN GRACE
+              Susan Grace
             </span>
           </div>
           <button
